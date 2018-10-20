@@ -2,19 +2,19 @@
 #
 #
 #
-# TOOL NAME: projsetup
+# TOOL NAME: projectcreator
 # WRITTEN BY: tacree
 # DATE: 10/18/2018
 # REV:
 # First Worked: 10/18/2018
 # Purpose: To create a script that will auto-create a project directory with
-# template .sh files and automatically convert the new files to 755 permissions.
+# template files in the language's file extension and automatically convert the new files to 755 permissions.
 #
 # REV LIST:
-# BY:
-# DATE:
-# CHANGES MADE:
-#
+# BY: tacree
+# DATE: 10/20/2018
+# CHANGES MADE: projectcreator creates the new project directory and prompts the user if they want to
+# open a new iTerm2 window (via the ttab tool) and open a new window of Atom text editor in the new directory.
 #
 #
 
@@ -50,8 +50,10 @@ function PROJCREATE() {
     mv $FILE ${NEW_FILE}
     # Makes the new file executable.
     chmod 755 ~/Scripts/${PROJLANG}/${PROJNAME}/${NEW_FILE}
-    # If statement to update the shebang to #1/usr/bin/env LANGUAGE
+    # Update the shebang to #1/usr/bin/env LANGUAGE
     if [[ ${PROJLANG} = "ruby" ]]; then
+      # sed operation on mac OS requires you to specify the file type after the -i flag.
+      # 2 single quotes searches all filetypes.
       sed -i '' 's/bash/ruby/' ~/Scripts/${PROJLANG}/${PROJNAME}/${NEW_FILE}
     elif [[ ${PROJLANG} = "python" ]]; then
       sed -i '' 's/bash/python/' ~/Scripts/${PROJLANG}/${PROJNAME}/${NEW_FILE}
@@ -59,11 +61,28 @@ function PROJCREATE() {
 
   done
   echo -e "\033[0;32m Created project directory $PROJNAME with ${FILETYPE} file extensions. \033[0m"
+  read -p "Open iTerm2 window of new directory, and open Atom text editor? (y|n)" OPENPROJ
+  if [[ ${OPENPROJ} = "y" ]]; then
+    ttab -w -t ${PROJNAME} -a iTerm2 cd ~/Scripts/${PROJLANG}/${PROJNAME}/
+    atom ~/Scripts/${PROJLANG}/${PROJNAME}/
+  elif [[ ${OPENPROJ} = "n" ]]; then
+    exit 0
+  else
+    echo -e "\033[0;31m Error, invalid input. Enter y or n to continue. \033[0m"
+    read -p "Open iTerm2 window of new directory, and open Atom text editor? (y|n)" OPENPROJ
+    if [[ ${OPENPROJ} = "y" ]]; then
+      ttab -w -t ${PROJNAME} -a iTerm2 cd ~/Scripts/${PROJLANG}/${PROJNAME}/
+      atom ~/Scripts/${PROJLANG}/${PROJNAME}/main${FILETYPE}
+    elif [[ ${OPENPROJ} = "n" ]]; then
+      exit 0
+    else
+      echo -e "\033[0;31m Error, invalid input. Enter y or n to continue. \033[0m"
+    fi
+  fi
 }
 
 function USAGE() {
   echo -e "Usage:   ./newproj.sh -n PROJECTNAME -l PROJECTLANGUAGE"
-
 }
 
 #############################################################
