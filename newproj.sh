@@ -35,6 +35,8 @@ function LANGCHECK() {
   elif [[ ${PROJLANG} = "ruby" ]]
   then
     FILETYPE=".rb"
+  else
+    FILETYPE=""
   fi
 }
 
@@ -51,38 +53,67 @@ function PROJCREATE() {
     # Makes the new file executable.
     chmod 755 ~/Scripts/${PROJLANG}/${PROJNAME}/${NEW_FILE}
     # Update the shebang to #1/usr/bin/env LANGUAGE
-    if [[ ${PROJLANG} = "ruby" ]]; then
+    if [[ ${PROJLANG} != "bash" ]]; then
       # sed operation on mac OS requires you to specify the file type after the -i flag.
       # 2 single quotes searches all filetypes.
-      sed -i '' 's/bash/ruby/' ~/Scripts/${PROJLANG}/${PROJNAME}/${NEW_FILE}
-    elif [[ ${PROJLANG} = "python" ]]; then
-      sed -i '' 's/bash/python/' ~/Scripts/${PROJLANG}/${PROJNAME}/${NEW_FILE}
+      sed -i '' 's/bash/'${PROJLANG}'/' ~/Scripts/${PROJLANG}/${PROJNAME}/${NEW_FILE}
     fi
 
   done
-  echo -e "\033[0;32m Created project directory $PROJNAME with ${FILETYPE} file extensions. \033[0m"
+  echo -e "\033[0;32m Created project directory $PROJNAME with ${FILETYPE} file extensions in ~/Scripts/${PROJLANG}/${PROJNAME} \033[0m"
   read -p "Open iTerm2 window of new directory, and open Atom text editor? (y|n)" OPENPROJ
   if [[ ${OPENPROJ} = "y" ]]; then
-    ttab -w -t ${PROJNAME} -a iTerm2 cd ~/Scripts/${PROJLANG}/${PROJNAME}/
+    ttab cd ~/Scripts/${PROJLANG}/${PROJNAME}/
     atom ~/Scripts/${PROJLANG}/${PROJNAME}/
   elif [[ ${OPENPROJ} = "n" ]]; then
-    exit 0
+    GIT_INIT
   else
     echo -e "\033[0;31m Error, invalid input. Enter y or n to continue. \033[0m"
-    read -p "Open iTerm2 window of new directory, and open Atom text editor? (y|n)" OPENPROJ
+    read -p "Open iTerm2 tab of new directory, and open Atom text editor (opens a new Atom window)? (y|n)" OPENPROJ
     if [[ ${OPENPROJ} = "y" ]]; then
-      ttab -w -t ${PROJNAME} -a iTerm2 cd ~/Scripts/${PROJLANG}/${PROJNAME}/
-      atom ~/Scripts/${PROJLANG}/${PROJNAME}/main${FILETYPE}
+      ttab cd ~/Scripts/${PROJLANG}/${PROJNAME}/
+      atom ~/Scripts/${PROJLANG}/${PROJNAME}/
+      GIT_INIT
     elif [[ ${OPENPROJ} = "n" ]]; then
-      exit 0
+      GIT_INIT
     else
       echo -e "\033[0;31m Error, invalid input. Enter y or n to continue. \033[0m"
     fi
+  GIT_INIT
   fi
 }
 
 function USAGE() {
-  echo -e "Usage:   ./newproj.sh -n PROJECTNAME -l PROJECTLANGUAGE"
+  echo -e "Usage:   newproj -n PROJECTNAME -l PROJECTLANGUAGE"
+}
+
+function GIT_INIT() {
+  read -p "Project created. Would you like to git INIT this project?" INIT
+
+  if [[ ${INIT} = "y" ]]; then
+    cd ~/Scripts/${PROJLANG}/${PROJNAME}/
+    git init
+  elif [[ ${INIT} = "n" ]]; then
+    echo "Not Initializing a repository. Closing tool."
+    exit 0
+  else
+    echo -e "\033[0;31m Error, invalid input. Enter y or n to continue. \033[0m"
+  fi
+
+  read -p "Do you have a github repository you would like to add for remote pushes?" REMOTE_REPO
+
+  if [[ ${REMOTE_REPO} = "y" ]]; then
+    echo -e "Enter the URL of the github repo. For SSH, ensure your publish SSH key is added for your current machine to your github account!"
+    read -p "Please enter the url of the remote repository: " REPO_URL
+    echo "Setting git remote origin."
+    git remote add origin ${REPO_URL}
+    cd ~/Scripts/${PROJLANG}/${PROJNAME}
+  elif [[ ${REMOTE_REPO} = "n" ]]; then
+    echo "No remote repository added at this time. Have a good day!"
+    exit 0
+  else
+    echo -e "\033[0;31m Error, invalid input. Enter y or n to continue. \033[0m"
+  fi
 }
 
 #############################################################
@@ -110,6 +141,15 @@ while [ "$1" != "" ]; do
       exit 1
   esac
 done
+
+echo "Do you want to create an alias in ~/.bash_profile?"
+read NEW_ALIAS
+
+if [[ ${NEW_ALIAS} = "y" ]]; then
+  echo "alias newproj=$(pwd)/projsetup/newproj.sh" >> ~/.bash_profile
+elif [[ ${NEW_ALIAS} = "n" ]]; then
+  LANGCHECK
+fi
 
 LANGCHECK
 PROJCREATE
