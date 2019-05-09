@@ -12,9 +12,8 @@
 #
 # REV LIST:
 # BY: tacree
-# DATE: 10/20/2018
-# CHANGES MADE: projectcreator creates the new project directory and prompts the user if they want to
-# open a new iTerm2 window (via the ttab tool) and open a new window of Atom text editor in the new directory.
+# DATE: 05/01/2019
+# CHANGES MADE: added git init and remote repo adds, changed around the sed command in the PROJCREATE function, whittled down ttab command. Made a post on the Atom.io discussion boards about opening the new project folder in an existing window vs a new one
 #
 #
 
@@ -29,12 +28,15 @@ function LANGCHECK() {
   if [[ ${PROJLANG} = "python" ]]
   then
     FILETYPE=".py"
+    DIRTYPE="Python"
   elif [[ ${PROJLANG} = "bash" ]]
   then
     FILETYPE=".sh"
+    DIRTYPE="Bash"
   elif [[ ${PROJLANG} = "ruby" ]]
   then
     FILETYPE=".rb"
+    DIRTYPE="Ruby"
   else
     FILETYPE=""
   fi
@@ -42,7 +44,7 @@ function LANGCHECK() {
 
 # Function to copy template project folder set up for a new project.
 function PROJCREATE() {
-  cp -R ~/Scripts/Bash/newproj ~/Scripts/${PROJLANG}/${PROJNAME}
+  cp -R ~/Scripts/Bash/newproj ~/Scripts/${DIRTYPE}/${PROJNAME}
   cd ~/Scripts/${PROJLANG}/${PROJNAME}
   # Loops through any/all files in the project direcotry to manipulate as needed.
   for FILE in *
@@ -51,28 +53,28 @@ function PROJCREATE() {
     NEW_FILE="${FILE}${FILETYPE}"
     mv $FILE ${NEW_FILE}
     # Makes the new file executable.
-    chmod 755 ~/Scripts/${PROJLANG}/${PROJNAME}/${NEW_FILE}
+    chmod 755 ~/Scripts/${DIRTYPE}/${PROJNAME}/${NEW_FILE}
     # Update the shebang to #1/usr/bin/env LANGUAGE
     if [[ ${PROJLANG} != "bash" ]]; then
       # sed operation on mac OS requires you to specify the file type after the -i flag.
       # 2 single quotes searches all filetypes.
-      sed -i '' 's/bash/'${PROJLANG}'/' ~/Scripts/${PROJLANG}/${PROJNAME}/${NEW_FILE}
+      sed -i '' 's/bash/'${PROJLANG}'/' ~/Scripts/${DIRTYPE}/${PROJNAME}/${NEW_FILE}
     fi
 
   done
-  echo -e "\033[0;32m Created project directory $PROJNAME with ${FILETYPE} file extensions in ~/Scripts/${PROJLANG}/${PROJNAME} \033[0m"
-  read -p "Open iTerm2 window of new directory, and open Atom text editor? (y|n)" OPENPROJ
+  echo -e "\033[0;32m Created project directory $PROJNAME with ${FILETYPE} file extensions in ~/Scripts/${DIRTYPE}/${PROJNAME} \033[0m"
+  read -p "Open iTerm2 tab of new directory, and open Atom text editor? (y|n)" OPENPROJ
   if [[ ${OPENPROJ} = "y" ]]; then
-    ttab cd ~/Scripts/${PROJLANG}/${PROJNAME}/
-    atom ~/Scripts/${PROJLANG}/${PROJNAME}/
+    ttab cd ~/Scripts/${DIRTYPE}/${PROJNAME}/
+    atom ~/Scripts/${DIRTYPE}/${PROJNAME}/
   elif [[ ${OPENPROJ} = "n" ]]; then
     GIT_INIT
   else
     echo -e "\033[0;31m Error, invalid input. Enter y or n to continue. \033[0m"
     read -p "Open iTerm2 tab of new directory, and open Atom text editor (opens a new Atom window)? (y|n)" OPENPROJ
     if [[ ${OPENPROJ} = "y" ]]; then
-      ttab cd ~/Scripts/${PROJLANG}/${PROJNAME}/
-      atom ~/Scripts/${PROJLANG}/${PROJNAME}/
+      ttab cd ~/Scripts/${DIRTYPE}/${PROJNAME}/
+      atom ~/Scripts/${DIRTYPE}/${PROJNAME}/
       GIT_INIT
     elif [[ ${OPENPROJ} = "n" ]]; then
       GIT_INIT
@@ -91,7 +93,7 @@ function GIT_INIT() {
   read -p "Project created. Would you like to git INIT this project?" INIT
 
   if [[ ${INIT} = "y" ]]; then
-    cd ~/Scripts/${PROJLANG}/${PROJNAME}/
+    cd ~/Scripts/${DIRTYPE}/${PROJNAME}/
     git init
   elif [[ ${INIT} = "n" ]]; then
     echo "Not Initializing a repository. Closing tool."
@@ -107,7 +109,7 @@ function GIT_INIT() {
     read -p "Please enter the url of the remote repository: " REPO_URL
     echo "Setting git remote origin."
     git remote add origin ${REPO_URL}
-    cd ~/Scripts/${PROJLANG}/${PROJNAME}
+    cd ~/Scripts/${DIRTYPE}/${PROJNAME}
   elif [[ ${REMOTE_REPO} = "n" ]]; then
     echo "No remote repository added at this time. Have a good day!"
     exit 0
